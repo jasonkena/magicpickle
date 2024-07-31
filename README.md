@@ -1,11 +1,31 @@
 # MagicPickle
+`magicpickle` allows you to transfer pickled representations of objects between local and remote instances of scripts, providing a near-seamless way of write code which both accesses data stored remotely and visualizes it locally. This avoids the need to:
+- store, load, and sync intermediate data representations between local and remote machines
+- use X11 forwarding/VNC with noticable latency
 
-## Example use
+Internally, `magicpickle` uses `joblib` to pickle and unpickle objects, and `magic-wormhole` to transfer the pickled data between local and remote instances of a script.
+
+Note that `magicpickle` assumes that each `mp.save` is associated with a single `mp.load` in the same script (assumes that both local and remote instances have the same control flow).
+
+## Installation
+```pip install magicpickle```
+
+## Usage
+Check the docstrings in `src/magicpickle.py` for more information. Example use:
+
 ```python
 from magicpickle import MagicPickle
-with MagicPickle(is_local_func=lambda: args.is_local) as mp:
-    if mp.is_remote:
+
+with MagicPickle(MY_LOCAL_HOSTNAME) as mp: # or MagicPickle(func_that_returns_true_if_local)
+    if mp.is_remote: # or mp.is_local
         mp.save("hello")
     else:
         print(mp.load())
 ```
+
+## Tmux
+`tmux_magicpickle.py` is a script that scrapes your panes and automatically enters the `magic-wormhole` code for you. Add the following to your `~/.tmux.conf` to use it:
+```
+bind-key g run-shell "python3 PATH_TO/tmux_magicpickle.py"
+```
+to add the `prefix + g` binding.

@@ -6,9 +6,7 @@ import joblib
 import tempfile
 import subprocess
 
-
-def default_is_local_func():
-    return "think-jason" in socket.gethostname()
+from typing import Union, Callable
 
 
 class MagicPickle:
@@ -24,17 +22,40 @@ class MagicPickle:
     local and remote must have exact same control flow
     """
 
-    def __init__(self, is_local_func=default_is_local_func):
-        self.is_local = is_local_func()
+    def __init__(
+        self,
+        local_hostname_or_func: Union[str, Callable[[], bool]],
+        verbose: bool = True,
+        compress: Union[bool, int] = True,
+    ):
+        """
+        Parameters
+        ----------
+        local_hostname_or_func
+            either the hostname of the local machine or a function that returns True if local
+        verbose
+        compress
+            compression level for joblib.dump
+        """
+        if callable(local_hostname_or_func):
+            self.is_local = local_hostname_or_func()
+        else:
+            self.is_local = local_hostname_or_func in socket.gethostname()
         self.is_remote = not self.is_local
-        print(f"MagicPickle is_local: {self.is_local}")
+
+        self.verbose = verbose
+        self.compress = compress
+
+        if self.verbose:
+            print(f"MagicPickle is_local: {self.is_local}")
 
         assert shutil.which("wormhole"), "Please install magic-wormhole"
 
     def __enter__(self):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.store_path = os.path.join(self.tmpdir.name, "store")
-        print(f"MagicPickle tmpdir: {self.tmpdir.name}")
+        if self.verbose:
+            print(f"MagicPickle tmpdir: {self.tmpdir.name}")
 
         if self.is_local:
             command = input("Enter wormhole command: ").strip()
@@ -44,9 +65,7 @@ class MagicPickle:
             ), "Invalid command received"
             code = command.split()[-1]
             command = f"wormhole receive --accept-file {code}"
-            subprocess.run(
-                command.split(), cwd=self.tmpdir.name, check=True
-            )  # , shell=True)
+            subprocess.run(command.split(), cwd=self.tmpdir.name, check=True)
 
             assert os.path.exists(
                 self.store_path
@@ -59,9 +78,11 @@ class MagicPickle:
 
     def __exit__(self, exc_type, exc_value, traceback):
         if not self.is_local:
-            joblib.dump(self.store, self.store_path)
+            joblib.dump(self.store, self.store_path, compress=self.compress)
             command = f"wormhole send {self.store_path}"
             subprocess.run(command.split(), check=True)
+        if self.verbose:
+            print(f"MagicPickle cleaning tmpdir: {self.tmpdir.name}")
         self.tmpdir.cleanup()
 
     def load(self):
@@ -71,16 +92,3 @@ class MagicPickle:
     def save(self, obj):
         assert not self.is_local, "Cannot save in local mode"
         self.store.append(obj)
-
-
-if __name__ == "__main__":
-    # example usage
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--is_local", action="store_true")
-    args = parser.parse_args()
-
-    with MagicPickle(is_local_func=lambda: args.is_local) as mp:
-        if mp.is_remote:
-            mp.save("hello")
-        else:
-            print(mp.load())
