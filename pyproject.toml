@@ -1,6 +1,9 @@
 [project]
 name = "magicpickle"
 version = "0.0.1"
+description = "A wrapper around magic-wormhole and joblib to send pickled objects across the internet."
+readme = "README.md"
+license = {file = "LICENSE"}
 dependencies = [
     "joblib",
     "magic-wormhole",
