@@ -77,7 +77,8 @@ class MagicPickle:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        if not self.is_local:
+        # only run when no errors
+        if exc_type is None and self.is_remote:
             joblib.dump(self.store, self.store_path, compress=self.compress)
             command = f"wormhole send {self.store_path}"
             subprocess.run(command.split(), check=True)
@@ -90,5 +91,5 @@ class MagicPickle:
         return self.store.pop(0)
 
     def save(self, obj):
-        assert not self.is_local, "Cannot save in local mode"
+        assert self.is_remote, "Cannot save in local mode"
         self.store.append(obj)

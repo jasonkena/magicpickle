@@ -1,11 +1,11 @@
 # MagicPickle
-`magicpickle` allows you to transfer pickled representations of objects between local and remote instances of scripts, providing a near-seamless way of write code which both accesses data stored remotely and visualizes it locally. This avoids the need to:
+`magicpickle` allows you to transfer pickled representations of objects between local and remote instances of scripts, providing a near-seamless way to write code which both accesses data stored remotely and visualizes it locally. This avoids the need to:
 - store, load, and sync intermediate data representations between local and remote machines
 - use X11 forwarding/VNC with noticable latency
 
 Internally, `magicpickle` uses `joblib` to pickle and unpickle objects, and `magic-wormhole` to transfer the pickled data between local and remote instances of a script.
 
-Note that `magicpickle` assumes that each `mp.save` is associated with a single `mp.load` in the same script (assumes that both local and remote instances have the same control flow).
+Note that `magicpickle` assumes that each `mp.save` is associated with a _single_ `mp.load` in the same script; it assumes that both local and remote instances have the same control flow.
 
 ## Installation
 ```pip install magicpickle```
