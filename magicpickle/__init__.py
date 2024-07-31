@@ -1,0 +1,1 @@
+from .magicpickle import MagicPickle

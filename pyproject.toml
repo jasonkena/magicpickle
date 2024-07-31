@@ -1,0 +1,7 @@
+[project]
+name = "magicpickle"
+version = "0.0.1"
+dependencies = [
+    "joblib",
+    "magic-wormhole",
+]
