@@ -1,4 +1,6 @@
 # MagicPickle
+[magicpickle_demo.webm](https://github.com/user-attachments/assets/5db0f63c-f44b-485d-b67e-97266f691d99)
+
 `magicpickle` allows you to transfer pickled representations of objects between local and remote instances of scripts, providing a near-seamless way to write code which both accesses data stored remotely and visualizes it locally. This avoids the need to:
 - store, load, and sync intermediate data representations between local and remote machines
 - use X11 forwarding/VNC with noticable latency
@@ -37,7 +39,7 @@ import dill as pickle
 ```
 
 To allow the loading of pickled CUDA tensors onto a CPU, prefix your script with
-```
+```python
 import torch
 # https://stackoverflow.com/a/78399538/10702372
 torch.serialization.register_package(0, lambda x: x.device.type, lambda x, _: x.cpu())
