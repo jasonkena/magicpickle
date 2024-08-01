@@ -29,3 +29,16 @@ with MagicPickle(MY_LOCAL_HOSTNAME) as mp: # or MagicPickle(func_that_returns_tr
 bind-key g run-shell "python3 PATH_TO/tmux_magicpickle.py"
 ```
 to add the `prefix + g` binding.
+
+## Gotchas
+To allow the pickling of lambda functions, prefix your script with
+```python
+import dill as pickle
+```
+
+To allow the loading of pickled CUDA tensors onto a CPU, prefix your script with
+```
+import torch
+# https://stackoverflow.com/a/78399538/10702372
+torch.serialization.register_package(0, lambda x: x.device.type, lambda x, _: x.cpu())
+```
