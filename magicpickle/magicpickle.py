@@ -1,12 +1,11 @@
 import os
-import argparse
 import shutil
 import socket
 import joblib
 import tempfile
 import subprocess
 
-from typing import Union, Callable
+from typing import Union, Callable, Optional
 
 
 class MagicPickle:
@@ -27,6 +26,9 @@ class MagicPickle:
         local_hostname_or_func: Union[str, Callable[[], bool]],
         verbose: bool = True,
         compress: Union[bool, int] = True,
+        local_store_cache: Optional[str] = os.path.join(
+            tempfile.gettempdir(), "magicpickle_cache"
+        ),
     ):
         """
         Parameters
@@ -36,6 +38,8 @@ class MagicPickle:
         verbose
         compress
             compression level for joblib.dump
+        local_store_cache
+            persistent cache file used, triggered when empty string passed into prompt on local
         """
         if callable(local_hostname_or_func):
             self.is_local = local_hostname_or_func()
@@ -45,6 +49,7 @@ class MagicPickle:
 
         self.verbose = verbose
         self.compress = compress
+        self.local_store_cache = local_store_cache
 
         if self.verbose:
             print(f"MagicPickle is_local: {self.is_local}")
@@ -58,19 +63,33 @@ class MagicPickle:
             print(f"MagicPickle tmpdir: {self.tmpdir.name}")
 
         if self.is_local:
+            print("Press enter to load from cache")
             command = input("Enter wormhole command: ").strip()
-            # of the form wormhole receive 89-ohio-buzzard
-            assert (
-                command.startswith("wormhole receive") and len(command.split()) == 3
-            ), "Invalid command received"
-            code = command.split()[-1]
-            command = f"wormhole receive --accept-file {code}"
-            subprocess.run(command.split(), cwd=self.tmpdir.name, check=True)
+            if command == "":
+                # try to load from cache
+                assert self.local_store_cache is not None, "local_store_cache is None"
+                assert os.path.exists(
+                    self.local_store_cache
+                ), f"cache not found in {self.local_store_cache}"
 
-            assert os.path.exists(
-                self.store_path
-            ), f"store not found in {self.tmpdir.name}"
-            self.store = joblib.load(self.store_path)
+                self.store = joblib.load(self.local_store_cache)
+            else:
+                # of the form wormhole receive 89-ohio-buzzard
+                assert (
+                    command.startswith("wormhole receive") and len(command.split()) == 3
+                ), "Invalid command received"
+                code = command.split()[-1]
+                command = f"wormhole receive --accept-file {code}"
+                subprocess.run(command.split(), cwd=self.tmpdir.name, check=True)
+
+                assert os.path.exists(
+                    self.store_path
+                ), f"store not found in {self.tmpdir.name}"
+
+                if self.local_store_cache is not None:
+                    shutil.copy(self.store_path, self.local_store_cache)
+
+                self.store = joblib.load(self.store_path)
         else:
             self.store = []
 

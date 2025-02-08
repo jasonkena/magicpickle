@@ -1,6 +1,6 @@
 [project]
 name = "magicpickle"
-version = "0.0.4"
+version = "0.0.5"
 description = "A wrapper around magic-wormhole and joblib to send pickled objects across the internet."
 readme = "README.md"
 license = {text = "MIT License"}
