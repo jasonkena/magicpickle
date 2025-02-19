@@ -112,3 +112,19 @@ class MagicPickle:
     def save(self, obj):
         assert self.is_remote, "Cannot save in local mode"
         self.store.append(obj)
+
+
+def send(obj, *args, **kwargs):
+    """
+    Wrapper around MagicPickle to simply send objects
+    """
+    with MagicPickle(lambda: False, *args, **kwargs) as mp:
+        mp.save(obj)
+
+
+def receive(*args, **kwargs):
+    """
+    Wrapper around MagicPickle to simply receive objects
+    """
+    with MagicPickle(lambda: True, *args, **kwargs) as mp:
+        return mp.load()
